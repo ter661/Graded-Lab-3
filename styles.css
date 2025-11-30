@@ -1,0 +1,232 @@
+:root {
+    --primary-font: 'Roboto Mono', monospace; 
+    --body-color: #f7f7f7;
+    --card-bg: #ffffff;
+    --border-color: #333333;
+    --padding-unit: 1rem;
+}
+
+* {
+    box-sizing: border-box; 
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--primary-font); 
+    background-color: var(--body-color);
+    color: var(--border-color);
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4 {
+    margin-bottom: var(--padding-unit);
+    text-transform: uppercase;
+}
+
+.container {
+    display: flex;
+    flex-direction: column; 
+    min-height: 100vh;
+    padding: var(--padding-unit);
+    gap: calc(var(--padding-unit) * 2); 
+}
+
+.form-panel, .preview-panel {
+    padding: calc(var(--padding-unit) * 2);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    flex: 1 1 100%; 
+}
+
+.form-group {
+    margin-bottom: var(--padding-unit);
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    background: none;
+    font-family: var(--primary-font);
+    color: inherit;
+    transition: border-color 0.3s ease; 
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: black;
+    outline: none;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: var(--padding-unit);
+    margin-top: var(--padding-unit);
+}
+
+button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--border-color);
+    font-family: var(--primary-font);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, color 0.3s ease; 
+}
+
+button:hover:not([disabled]) {
+    background-color: var(--border-color);
+    color: var(--card-bg);
+}
+
+button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.receipt-card {
+    border: 2px dashed var(--border-color);
+    padding: calc(var(--padding-unit) * 2);
+    margin-top: var(--padding-unit);
+    background-color: var(--card-bg);
+    opacity: 0; 
+    transform: translateY(20px);
+    animation: fadeIn 0.5s forwards; 
+}
+
+.receipt-card.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.receipt-header, .receipt-footer {
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.receipt-footer {
+    border-top: 1px solid var(--border-color);
+    border-bottom: none;
+    padding-top: 0.5rem;
+    margin-top: 1rem;
+}
+
+.receipt-detail {
+    margin-bottom: 0.75rem;
+}
+
+.amount-section {
+    text-align: right;
+    margin: 1.5rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 0;
+}
+
+.amount-value {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+
+.history-panel {
+    margin-bottom: calc(var(--padding-unit) * 2);
+    padding-bottom: var(--padding-unit);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#historyList {
+    list-style: none;
+    padding: 0;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #cccccc;
+    font-size: 0.9rem;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-item-details {
+    flex-grow: 1;
+}
+
+.history-item button {
+    padding: 0.25rem; 
+    min-width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    margin-left: var(--padding-unit);
+    text-transform: none;
+}
+.history-item button i.material-icons {
+    font-size: 18px;
+    margin: 0;
+}
+
+
+@media (min-width: 768px) {
+    .container {
+        flex-direction: row; 
+    }
+
+    .form-panel {
+        flex: 1 1 40%; 
+    }
+
+    .preview-panel {
+        flex: 1 1 60%; 
+    }
+}
+
+@media print {
+    body {
+        background-color: white;
+    }
+    .container {
+        display: block;
+        padding: 0;
+    }
+    .form-panel, .preview-panel h2, .history-panel {
+        display: none; 
+    }
+    .preview-panel {
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+    .receipt-card {
+        border: none;
+        padding: 0;
+        margin: 0;
+        opacity: 1;
+        transform: none;
+        animation: none;
+        width: 100%;
+    }
+}
