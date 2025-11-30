@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rent Receipt</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+
+    <main class="container">
+        <section class="form-panel">
+            <h1>Generate Rent Receipt</h1>
+            <form id="receiptForm">
+
+                <div class="form-group"><label for="tenantName">Tenant Name</label><input type="text" id="tenantName" name="tenantName" required></div>
+                <div class="form-group"><label for="propertyAddress">Property Address</label><input type="text" id="propertyAddress" name="propertyAddress" required></div>
+                <div class="form-group"><label for="unitNumber">Unit/Apt Number (Optional)</label><input type="text" id="unitNumber" name="unitNumber"></div>
+
+                <div class="form-group"><label for="amountPaid">Amount Paid ($)</label><input type="number" id="amountPaid" name="amountPaid" min="0.01" step="0.01" required></div>
+                <div class="form-group"><label for="paymentDate">Payment Date</label><input type="date" id="paymentDate" name="paymentDate" required></div>
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method</label>
+                    <select id="paymentMethod" name="paymentMethod" required>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Credit Card">Credit Card</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label for="landlordName">Landlord/Manager Name</label><input type="text" id="landlordName" name="landlordName" required></div>
+
+                <div class="form-group"><label for="notes">Notes/Memo (Optional)</label><textarea id="notes" name="notes"></textarea></div>
+
+                <div class="form-actions">
+                    <button type="button" id="generateBtn">
+                        <i class="material-icons">receipt</i> Generate Receipt
+                    </button>
+                    <button type="button" id="printBtn" disabled>
+                        <i class="material-icons">print</i> Print
+                    </button>
+                    <button type="button" id="deleteAllBtn">
+                        <i class="material-icons">delete_forever</i> Delete All
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="preview-panel" aria-live="polite">
+            <section id="receiptHistory" class="history-panel">
+                <h3>Receipt History</h3>
+                <ul id="historyList">
+                    </ul>
+            </section>
+            
+            <h2>Receipt Preview</h2>
+            <div id="receiptCard" class="receipt-card hidden">
+                <header class="receipt-header">
+                    <h3>RENT PAYMENT RECEIPT</h3>
+                    <p>Receipt ID: <span id="receipt-id">R-000000</span></p>
+                    <p>Date Generated: <span id="receipt-date-generated"></span></p>
+                </header>
+
+                <div class="receipt-body">
+                    <div class="receipt-detail">
+                        <p><strong>RECEIVED FROM:</strong> <span id="receipt-tenant"></span></p>
+                    </div>
+                    <div class="receipt-detail">
+                        <p><strong>FOR PROPERTY:</strong> <span id="receipt-address"></span></p>
+                    </div>
+                    <div class="receipt-detail">
+                        <p><strong>UNIT:</strong> <span id="receipt-unit">N/A</span></p>
+                    </div>
+                    <div class="receipt-detail amount-section">
+                        <h4>AMOUNT PAID</h4>
+                        <p class="amount-value" id="receipt-amount">$0.00</p>
+                    </div>
+                    <div class="receipt-detail payment-info">
+                        <p><strong>Payment Date:</strong> <span id="receipt-payment-date"></span></p>
+                        <p><strong>Method:</strong> <span id="receipt-method"></span></p>
+                    </div>
+                    <div class="receipt-detail notes-section">
+                        <p><strong>Memo:</strong> <span id="receipt-notes">N/A</span></p>
+                    </div>
+                </div>
+
+                <footer class="receipt-footer">
+                    <p><strong>RECEIVED BY:</strong> <span id="receipt-landlord"></span></p>
+                    <p>THANK YOU FOR YOUR PAYMENT</p>
+                </footer>
+            </div>
+        </aside>
+    </main>
+    
+    <script>
+        const form = document.getElementById('receiptForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const printBtn = document.getElementById('printBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const receiptCard = document.getElementById('receiptCard');
+        const historyList = document.getElementById('historyList');
+
+        const STORAGE_KEY = 'rentReceipts';
+
+        
+        const formatDate = (dateString) => {
+            if (!dateString) return 'N/A';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options); 
+        };
+
+        const formatCurrency = (amount) => {
+            const num = parseFloat(amount);
+            return isNaN(num) ? '$0.00' : num.toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            });
+        };
+
+        const generateReceiptID = () => {
+            const timestamp = Date.now().toString().slice(-6); 
+            const random = Math.floor(Math.random() * 900) + 100;
+            return 'R-' + timestamp + random;
+        };
+
+        const loadReceipts = () => {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        };
+        
+        const saveReceipts = (receipts) => {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(receipts));
+        };
+
+        const renderHistory = () => {
+            historyList.innerHTML = ''; 
+            const receipts = loadReceipts();
+
+            if (receipts.length === 0) {
+                historyList.innerHTML = '<li>No previous receipts found.</li>';
+                deleteAllBtn.setAttribute('disabled', 'disabled');
+                return;
+            }
+
+            deleteAllBtn.removeAttribute('disabled');
+            
+            receipts.forEach((receipt, index) => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <div class="history-item-details">
+                        ${receipt.id} | ${receipt.tenant} - ${formatCurrency(receipt.amount)} (${formatDate(receipt.paymentDate)})
+                    </div>
+                    <button class="delete-one-btn" data-index="${index}">
+                        <i class="material-icons">delete</i>
+                    </button>
+                `;
+                historyList.appendChild(li);
+            });
+        };
+
+        const deleteReceipt = (index) => {
+            const receipts = loadReceipts();
+            if (index >= 0 && index < receipts.length) {
+                receipts.splice(index, 1); 
+                saveReceipts(receipts);
+                renderHistory();
+                receiptCard.classList.add('hidden');
+                printBtn.setAttribute('disabled', 'disabled');
+            }
+        };
+
+        const deleteAllReceipts = () => {
+            if (confirm("Are you sure you want to delete all receipt history? This cannot be undone.")) {
+                saveReceipts([]); 
+                renderHistory();
+                receiptCard.classList.add('hidden');
+                printBtn.setAttribute('disabled', 'disabled');
+            }
+        };
+
+
+        historyList.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-one-btn')) {
+                const index = parseInt(e.target.closest('.delete-one-btn').dataset.index);
+                deleteReceipt(index);
+            }
+        });
+
+        deleteAllBtn.addEventListener('click', deleteAllReceipts);
+
+        generateBtn.addEventListener('click', function() {
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const data = {
+                id: generateReceiptID(), 
+                dateGenerated: new Date().toISOString(), 
+                tenant: document.getElementById('tenantName').value,
+                address: document.getElementById('propertyAddress').value,
+                unit: document.getElementById('unitNumber').value || 'N/A',
+                amount: document.getElementById('amountPaid').value,
+                paymentDate: document.getElementById('paymentDate').value,
+                method: document.getElementById('paymentMethod').value,
+                landlord: document.getElementById('landlordName').value,
+                notes: document.getElementById('notes').value || 'N/A',
+            };
+
+            document.getElementById('receipt-id').textContent = data.id;
+            document.getElementById('receipt-date-generated').textContent = formatDate(data.dateGenerated);
+            document.getElementById('receipt-tenant').textContent = data.tenant;
+            document.getElementById('receipt-address').textContent = data.address;
+            document.getElementById('receipt-unit').textContent = data.unit;
+            document.getElementById('receipt-amount').textContent = formatCurrency(data.amount);
+            document.getElementById('receipt-payment-date').textContent = formatDate(data.paymentDate);
+            document.getElementById('receipt-method').textContent = data.method;
+            document.getElementById('receipt-landlord').textContent = data.landlord;
+            document.getElementById('receipt-notes').textContent = data.notes;
+
+            receiptCard.classList.remove('hidden');
+            printBtn.removeAttribute('disabled');
+
+            const receipts = loadReceipts();
+            receipts.unshift(data); 
+            saveReceipts(receipts);
+            renderHistory();
+        });
+
+        printBtn.addEventListener('click', function() {
+            window.print(); 
+        });
+
+        document.addEventListener('DOMContentLoaded', renderHistory);
+    </script>
+</body>
+</html>
